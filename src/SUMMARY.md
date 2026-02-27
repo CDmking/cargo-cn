@@ -23,7 +23,7 @@
         * [覆盖依赖项](reference/overriding-dependencies.md)
     * [清单格式](reference/manifest.md)
         * [Cargo Targets](reference/cargo-targets.md)
-    * [Workspaces](reference/workspaces.md)
+    * [工作空间](reference/workspaces.md)
     * [Features](reference/features.md)
         * [Features Examples](reference/features-examples.md)
     * [Profiles](reference/profiles.md)
