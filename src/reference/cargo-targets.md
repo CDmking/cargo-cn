@@ -1,47 +1,30 @@
 ## Cargo Targets
 
-Cargo packages consist of *targets* which correspond to source files which can
-be compiled into a crate. Packages can have [library](#library),
-[binary](#binaries), [example](#examples), [test](#tests), and
-[benchmark](#benchmarks) targets. The list of targets can be configured in the
-`Cargo.toml` manifest, often [inferred automatically](#target-auto-discovery)
-by the [directory layout][package layout] of the source files.
+Cargo 包由*targets*组成，这些targets对应着可以编译成 crate 的源文件。包可以包含[库](#库)、[二进制程序](#二进制程序)、[示例](#examples)、[测试](#tests)和[基准测试](#基准测试benchmarks)targets。targets列表可以在 `Cargo.toml` 清单中配置，通常由源文件的[目录布局][包布局]自动推断。
 
-See [Configuring a target](#configuring-a-target) below for details on
-configuring the settings for a target.
+有关配置targets设置的详细信息，请参阅下文 [配置target](#配置target)。
 
-### Library
+### 库
 
-The library target defines a "library" that can be used and linked by other
-libraries and executables. The filename defaults to `src/lib.rs`, and the name
-of the library defaults to the name of the package. A package can have only
-one library. The settings for the library can be [customized] in the `[lib]`
-table in `Cargo.toml`.
+库targets定义了一个可以被其他库和可执行程序使用和链接的“库”。源文件默认路径为 `src/lib.rs`，库的名称默认为包的名称。一个包只能有一个库。库的设置可以在 `Cargo.toml` 的 `[lib]` 表中进行[自定义][customized]。
 
 ```toml
-# Example of customizing the library in Cargo.toml.
+# 在 Cargo.toml 中自定义库的示例。
 [lib]
 crate-type = ["cdylib"]
 bench = false
 ```
 
-### Binaries
+### 二进制程序
 
-Binary targets are executable programs that can be run after being compiled.
-The default binary filename is `src/main.rs`, which defaults to the name of
-the package. Additional binaries are stored in the [`src/bin/`
-directory][package layout]. The settings for each binary can be [customized]
-in the `[[bin]]` tables in `Cargo.toml`.
+二进制程序targets是编译后可运行的可执行程序。默认的二进制程序源文件是 `src/main.rs`，其名称默认为包的名称。额外的二进制程序存储在 [`src/bin/` 目录][package layout]中。每个二进制程序的设置可以在 `Cargo.toml` 的 `[[bin]]` 表中进行[自定义][customized]。
 
-Binaries can use the public API of the package's library. They are also linked
-with the [`[dependencies]`][dependencies] defined in `Cargo.toml`.
+二进制程序可以使用包的库的公共 API。它们也会与 `Cargo.toml` 中定义的 [`[dependencies]`][dependencies] 链接。
 
-You can run individual binaries with the [`cargo run`] command with the `--bin
-<bin-name>` option. [`cargo install`] can be used to copy the executable to a
-common location.
+你可以使用 [`cargo run`] 命令配合 `--bin <bin-name>` 选项来运行单个二进制程序。[`cargo install`] 可以用于将可执行文件复制到一个公共位置。
 
 ```toml
-# Example of customizing binaries in Cargo.toml.
+# 在 Cargo.toml 中自定义二进制程序的示例。
 [[bin]]
 name = "cool-tool"
 test = false
@@ -54,17 +37,11 @@ required-features = ["frobnicate"]
 
 ### Examples
 
-Files located under the [`examples` directory][package layout] are example
-uses of the functionality provided by the library. When compiled, they are
-placed in the [`target/debug/examples` directory][build cache].
+位于 [`examples` 目录][package layout] 下的文件是展示库所提供的功能用法的示例。编译后，它们会被放置在 [`target/debug/examples` 目录][build cache] 中。
 
-Examples can use the public API of the package's library. They are also linked
-with the [`[dependencies]`][dependencies] and
-[`[dev-dependencies]`][dev-dependencies] defined in `Cargo.toml`.
+Examples可以使用包的库的公共 API。它们也会与 `Cargo.toml` 中定义的 [`[dependencies]`][dependencies] 和 [`[dev-dependencies]`][dev-dependencies] 链接。
 
-By default, examples are executable binaries (with a `main()` function). You
-can specify the [`crate-type` field](#the-crate-type-field) to make an example
-be compiled as a library:
+默认情况下，examples是可执行的二进制程序（具有 `main()` 函数）。你可以指定 [`crate-type` 字段](#crate-type-字段) 来让示例编译为库：
 
 ```toml
 [[example]]
@@ -72,226 +49,134 @@ name = "foo"
 crate-type = ["staticlib"]
 ```
 
-You can run individual executable examples with the [`cargo run`] command with
-the `--example <example-name>` option. Library examples can be built with
-[`cargo build`] with the `--example <example-name>` option. [`cargo install`]
-with the `--example <example-name>` option can be used to copy executable
-binaries to a common location. Examples are compiled by [`cargo test`] by
-default to protect them from bit-rotting. Set [the `test`
-field](#the-test-field) to `true` if you have `#[test]` functions in the
-example that you want to run with [`cargo test`].
+你可以使用 [`cargo run`] 命令配合 `--example <example-name>` 选项来运行单个可执行示例。库示例可以使用 [`cargo build`] 并指定 `--example <example-name>` 选项来构建。[`cargo install`] 配合 `--example <example-name>` 选项可以用于将可执行二进制程序复制到一个公共位置。示例在默认情况下会由 [`cargo test`] 编译，以防止其因长期未使用而无法编译。如果示例中包含你想要用 [`cargo test`] 运行的 `#[test]` 函数，请将 [`test` 字段](#test-字段) 设置为 `true`。
 
 ### Tests
 
-There are two styles of tests within a Cargo project:
+Cargo 项目中有两种test：
 
-* *Unit tests* which are functions marked with the [`#[test]`
-  attribute][test-attribute] located within your library or binaries (or any
-  target enabled with [the `test` field](#the-test-field)). These tests have
-  access to private APIs located within the target they are defined in.
-* *Integration tests* which is a separate executable binary, also containing
-  `#[test]` functions, which is linked with the project's library and has
-  access to its *public* API.
+*   *单元测试（Unit tests）*：这些是位于库或二进制程序（或任何启用了 [`test` 字段](#test-字段) 的targets）中、标记有 [`#[test]` 属性][test-attribute] 的函数。这些测试可以访问它们所在targets中的私有 API。
+*   *集成测试（Integration tests）*：这是一个独立的可执行二进制程序，同样包含 `#[test]` 函数，它链接到项目的库并可以访问其*公共* API。
 
-Tests are run with the [`cargo test`] command. By default, Cargo and `rustc`
-use the libtest harness which is responsible for collecting functions
-annotated with the [`#[test]` attribute][test-attribute] and executing them in
-parallel, reporting the success and failure of each test. See [the `harness`
-field](#the-harness-field) if you want to use a different harness or test
-strategy.
+Tests通过 [`cargo test`] 命令运行。默认情况下，Cargo 和 `rustc` 使用 libtest 测试框架，它负责收集标有 [`#[test]` 属性][test-attribute] 的函数并并行执行它们，报告每个测试的成功与失败。如果你想使用不同的测试框架或测试策略，请参阅 [`harness` 字段](#harness-字段)。
 
-#### Integration tests
+#### 集成测试（Integration tests）
 
-Files located under the [`tests` directory][package layout] are integration
-tests. When you run [`cargo test`], Cargo will compile each of these files as
-a separate crate, and execute them.
+位于 [`tests` 目录][package layout] 下的文件是集成测试。当你运行 [`cargo test`] 时，Cargo 会将每个这样的文件编译为单独的 crate 并执行它们。
 
-Integration tests can use the public API of the package's library. They are
-also linked with the [`[dependencies]`][dependencies] and
-[`[dev-dependencies]`][dev-dependencies] defined in `Cargo.toml`.
+集成测试可以使用包的库的公共 API。它们也会与 `Cargo.toml` 中定义的 [`[dependencies]`][dependencies] 和 [`[dev-dependencies]`][dev-dependencies] 链接。
 
-If you want to share code among multiple integration tests, you can place it
-in a separate module such as `tests/common/mod.rs` and then put `mod common;`
-in each test to import it.
+如果你想在多个集成测试之间共享代码，可以将其放在单独的模块中，例如 `tests/common/mod.rs`，然后在每个测试中通过 `mod common;` 导入它。
 
-Each integration test results in a separate executable binary, and [`cargo
-test`] will run them serially. In some cases this can be inefficient, as it
-can take longer to compile, and may not make full use of multiple CPUs when
-running the tests. If you have a lot of integration tests, you may want to
-consider creating a single integration test, and split the tests into multiple
-modules. The libtest harness will automatically find all of the `#[test]`
-annotated functions and run them in parallel. You can pass module names to
-[`cargo test`] to only run the tests within that module.
+每个集成测试都会生成一个单独的可执行二进制程序，[`cargo test`] 会串行运行它们。在某些情况下，这可能效率不高，因为编译时间会更长，并且在运行测试时可能无法充分利用多核 CPU。如果你有很多集成测试，可以考虑创建一个单一的集成测试，并将测试分割成多个模块。libtest 测试框架会自动找到所有标有 `#[test]` 的函数并并行运行它们。你可以将模块名称传递给 [`cargo test`] 来仅运行该模块内的测试。
 
-Binary targets are automatically built if there is an integration test. This
-allows an integration test to execute the binary to exercise and test its
-behavior. The `CARGO_BIN_EXE_<name>` [environment variable] is set when the
-integration test is built so that it can use the [`env` macro] to locate the
-executable.
+如果存在集成测试，二进制targets会自动被构建。这使得集成测试可以执行二进制程序以测试其行为。集成测试构建时，会设置 `CARGO_BIN_EXE_<name>` [环境变量]，以便使用 [`env` 宏] 来定位可执行文件。
 
-[environment variable]: environment-variables.md#environment-variables-cargo-sets-for-crates
-[`env` macro]: ../../std/macro.env.html
+[环境变量]: environment-variables.md#environment-variables-cargo-sets-for-crates
+[`env` 宏]: ../../std/macro.env.html
 
-### Benchmarks
+### 基准测试（Benchmarks）
 
-Benchmarks provide a way to test the performance of your code using the
-[`cargo bench`] command. They follow the same structure as [tests](#tests),
-with each benchmark function annotated with the `#[bench]` attribute.
-Similarly to tests:
+基准测试（Benchmarks）提供了一种使用 [`cargo bench`] 命令测试代码性能的方法。它们的结构与[测试](#tests)类似，每个基准测试函数都标有 `#[bench]` 属性。与测试类似：
 
-* Benchmarks are placed in the [`benches` directory][package layout].
-* Benchmark functions defined in libraries and binaries have access to the
-  *private* API within the target they are defined in. Benchmarks in the
-  `benches` directory may use the *public* API.
-* [The `bench` field](#the-bench-field) can be used to define which targets
-  are benchmarked by default.
-* [The `harness` field](#the-harness-field) can be used to disable the
-  built-in harness.
+*   基准测试位于 [`benches` 目录][package layout]。
+*   在库和二进制程序中定义的基准测试函数可以访问它们所在targets中的*私有* API。`benches` 目录中的基准测试可以使用*公共* API。
+*   [`bench` 字段](#bench-字段) 可用于定义默认情况下哪些targets被基准测试。
+*   [`harness` 字段](#harness-字段) 可用于禁用内置的测试框架。
 
-> **Note**: The [`#[bench]`
-> attribute](../../unstable-book/library-features/test.html) is currently
-> unstable and only available on the [nightly channel]. There are some
-> packages available on [crates.io](https://crates.io/keywords/benchmark) that
-> may help with running benchmarks on the stable channel, such as
-> [Criterion](https://crates.io/crates/criterion).
+> **注意**：[`#[bench]` 属性](../../unstable-book/library-features/test.html) 目前还不稳定，仅在 [nightly 频道][nightly channel] 中可用。在 [crates.io](https://crates.io/keywords/benchmark) 上有一些包可以帮助在稳定频道上运行基准测试，例如 [Criterion](https://crates.io/crates/criterion)。
 
-### Configuring a target
+### 配置target
 
-All of the  `[lib]`, `[[bin]]`, `[[example]]`, `[[test]]`, and `[[bench]]`
-sections in `Cargo.toml` support similar configuration for specifying how a
-target should be built. The double-bracket sections like `[[bin]]` are
-[array-of-table of TOML](https://toml.io/en/v1.0.0-rc.3#array-of-tables),
-which means you can write more than one `[[bin]]` section to make several
-executables in your crate. You can only specify one library, so `[lib]` is a
-normal TOML table.
+`Cargo.toml` 中的所有 `[lib]`、`[[bin]]`、`[[example]]`、`[[test]]` 和 `[[bench]]` 部分都支持类似的配置，用于指定应如何构建targets。像 `[[bin]]` 这样的双括号部分是 [TOML 的数组表格](https://toml.io/en/v1.0.0-rc.3#array-of-tables)，这意味着你可以编写多个 `[[bin]]` 部分来在你的 crate 中创建多个可执行程序。你只能指定一个库，因此 `[lib]` 是一个普通的 TOML 表。
 
-The following is an overview of the TOML settings for each target, with each
-field described in detail below.
+以下是每个targets的 TOML 设置概述，每个字段的详细说明如下。
 
 ```toml
 [lib]
-name = "foo"           # The name of the target.
-path = "src/lib.rs"    # The source file of the target.
-test = true            # Is tested by default.
-doctest = true         # Documentation examples are tested by default.
-bench = true           # Is benchmarked by default.
-doc = true             # Is documented by default.
-plugin = false         # Used as a compiler plugin (deprecated).
-proc-macro = false     # Set to `true` for a proc-macro library.
-harness = true         # Use libtest harness.
-edition = "2015"       # The edition of the target.
-crate-type = ["lib"]   # The crate types to generate.
-required-features = [] # Features required to build this target (N/A for lib).
+name = "foo"           # target的名称。
+path = "src/lib.rs"    # target的源文件。
+test = true            # 默认情况下是否进行测试。
+doctest = true         # 默认情况下是否测试文档示例。
+bench = true           # 默认情况下是否进行基准测试。
+doc = true             # 默认情况下是否包含在文档中。
+plugin = false         # 用作编译器插件（已弃用）。
+proc-macro = false     # 对于过程宏库，设置为 `true`。
+harness = true         # 使用 libtest 测试框架。
+edition = "2015"       # targets使用的 Rust 版本。
+crate-type = ["lib"]   # 要生成的 crate 类型。
+required-features = [] # 构建此targets所需的功能（不适用于 lib）。
 ```
 
-#### The `name` field
+#### `name` 字段
 
-The `name` field specifies the name of the target, which corresponds to the
-filename of the artifact that will be generated. For a library, this is the
-crate name that dependencies will use to reference it.
+`name` 字段指定target的名称，对应于将生成的产物的文件名。对于库，这是依赖项将用来引用它的 crate 名称。
 
-For the `[lib]` and the default binary (`src/main.rs`), this defaults to the
-name of the package, with any dashes replaced with underscores. For other
-[auto discovered](#target-auto-discovery) targets, it defaults to the
-directory or file name.
+对于 `[lib]` 和默认的二进制程序（`src/main.rs`），此名称默认为包的名称，其中的任何连字符（-）都将替换为下划线（_）。对于其他[自动发现](#targets自动发现)的targets，它默认为目录或文件名。
 
-This is required for all targets except `[lib]`.
+除了 `[lib]` 之外，所有targets都需要此字段。
 
-#### The `path` field
+#### `path` 字段
 
-The `path` field specifies where the source for the crate is located, relative
-to the `Cargo.toml` file.
+`path` 字段指定 crate 源文件的位置，相对于 `Cargo.toml` 文件。
 
-If not specified, the [inferred path](#target-auto-discovery) is used based on
-the target name.
+如果未指定，则使用基于target名称的[推断路径](#targets自动发现)。
 
-#### The `test` field
+#### `test` 字段
 
-The `test` field indicates whether or not the target is tested by default by
-[`cargo test`]. The default is `true` for lib, bins, and tests.
+`test` 字段指示target是否默认由 [`cargo test`] 进行测试。对于库、二进制程序和测试，默认值为 `true`。
 
-> **Note**: Examples are built by [`cargo test`] by default to ensure they
-> continue to compile, but they are not *tested* by default. Setting `test =
-> true` for an example will also build it as a test and run any
-> [`#[test]`][test-attribute] functions defined in the example.
+> **注意**：Examples默认由 [`cargo test`] 构建以确保它们能继续编译，但默认情况下不会*测试*它们。将示例的 `test` 设置为 `true` 也会将其作为测试构建，并运行示例中定义的任何 [`#[test]`][test-attribute] 函数。
 
-#### The `doctest` field
+#### `doctest` 字段
 
-The `doctest` field indicates whether or not [documentation examples] are
-tested by default by [`cargo test`]. This is only relevant for libraries, it
-has no effect on other sections. The default is `true` for the library.
+`doctest` 字段指示[文档示例]是否默认由 [`cargo test`] 进行测试。这仅与库相关，对其他部分没有影响。对于库，默认值为 `true`。
 
-#### The `bench` field
+#### `bench` 字段
 
-The `bench` field indicates whether or not the target is benchmarked by
-default by [`cargo bench`]. The default is `true` for lib, bins, and
-benchmarks.
+`bench` 字段指示targets是否默认由 [`cargo bench`] 进行基准测试。对于库、二进制程序和基准测试，默认值为 `true`。
 
-#### The `doc` field
+#### `doc` 字段
 
-The `doc` field indicates whether or not the target is included in the
-documentation generated by [`cargo doc`] by default. The default is `true` for
-libraries and binaries.
+`doc` 字段指示targets是否默认包含在 [`cargo doc`] 生成的文档中。对于库和二进制程序，默认值为 `true`。
 
-> **Note**: The binary will be skipped if its name is the same as the lib
-> target.
+> **注意**：如果二进制程序的名称与库targets相同，则会被跳过。
 
-#### The `plugin` field
+#### `plugin` 字段
 
-This field is used for `rustc` plugins, which are being deprecated.
+此字段用于 `rustc` 插件，该功能已弃用。
 
-#### The `proc-macro` field
+#### `proc-macro` 字段
 
-The `proc-macro` field indicates that the library is a [procedural macro]
-([reference][proc-macro-reference]). This is only valid for the `[lib]`
-target.
+`proc-macro` 字段指示该库是一个[过程宏][procedural macro]（[参考][proc-macro-reference]）。这仅对 `[lib]` targets有效。
 
-#### The `harness` field
+#### `harness` 字段
 
-The `harness` field indicates that the [`--test` flag] will be passed to
-`rustc` which will automatically include the libtest library which is the
-driver for collecting and running tests marked with the [`#[test]`
-attribute][test-attribute] or benchmarks with the `#[bench]` attribute. The
-default is `true` for all targets.
+`harness` 字段指示 [`--test` 标志][`--test` flag] 将传递给 `rustc`，这将自动包含 libtest 库，该库是收集和运行标有 [`#[test]` 属性][test-attribute] 的测试或标有 `#[bench]` 属性的基准测试的驱动。对于所有targets，默认值为 `true`。
 
-If set to `false`, then you are responsible for defining a `main()` function
-to run tests and benchmarks.
+如果设置为 `false`，则需要你自己定义 `main()` 函数来运行测试和基准测试。
 
-Tests have the [`cfg(test)` conditional expression][cfg-test] enabled whether
-or not the harness is enabled.
+无论是否启用测试框架，测试都会启用 [`cfg(test)` 条件表达式][cfg-test]。
 
-#### The `edition` field
+#### `edition` 字段
 
-The `edition` field defines the [Rust edition] the target will use. If not
-specified, it defaults to the [`edition` field][package-edition] for the
-`[package]`. This field should usually not be set, and is only intended for
-advanced scenarios such as incrementally transitioning a large package to a
-new edition.
+`edition` 字段定义了targets将使用的 [Rust 版本][Rust Edition]。如果未指定，则默认为 `[package]` 的 [`edition` 字段][package-edition]。通常不应设置此字段，仅用于高级场景，例如逐步将大型包迁移到新版本。
 
-#### The `crate-type` field
+#### `crate-type` 字段
 
-The `crate-type` field defines the [crate types] that will be generated by the
-target. It is an array of strings, allowing you to specify multiple crate
-types for a single target. This can only be specified for libraries and
-examples. Binaries, tests, and benchmarks are always the "bin" crate type. The
-defaults are:
+`crate-type` 字段定义了targets将生成的 [crate 类型][crate types]。它是一个字符串数组，允许你为单个targets指定多种 crate 类型。这只能为库和示例指定。二进制程序、测试和基准测试始终是 "bin" crate 类型。默认值如下：
 
-Target | Crate Type
+targets | Crate 类型
 -------|-----------
-Normal library | `"lib"`
-Proc-macro library | `"proc-macro"`
-Example | `"bin"`
+普通库 | `"lib"`
+过程宏库 | `"proc-macro"`
+示例 | `"bin"`
 
-The available options are `bin`, `lib`, `rlib`, `dylib`, `cdylib`,
-`staticlib`, and `proc-macro`. You can read more about the different crate
-types in the [Rust Reference Manual][crate types].
+可用选项包括 `bin`、`lib`、`rlib`、`dylib`、`cdylib`、`staticlib` 和 `proc-macro`。你可以在 [Rust 参考手册][crate types] 中阅读更多关于不同 crate 类型的信息。
 
-#### The `required-features` field
+#### `required-features` 字段
 
-The `required-features` field specifies which [features] the target needs in
-order to be built. If any of the required features are not enabled, the
-target will be skipped. This is only relevant for the `[[bin]]`, `[[bench]]`,
-`[[test]]`, and `[[example]]` sections, it has no effect on `[lib]`.
+`required-features` 字段指定了构建targets所需的[功能][features]。如果所需功能中有任何一项未启用，则跳过该targets。这仅与 `[[bin]]`、`[[bench]]`、`[[test]]` 和 `[[example]]` 部分相关，对 `[lib]` 没有影响。
 
 ```toml
 [features]
@@ -305,19 +190,11 @@ name = "my-pg-tool"
 required-features = ["postgres", "tools"]
 ```
 
+### targets自动发现
 
-### Target auto-discovery
+默认情况下，Cargo 根据文件系统上的[文件布局][package layout]自动确定要构建的targets。targets配置表，如 `[lib]`、`[[bin]]`、`[[test]]`、`[[bench]]` 或 `[[example]]`，可用于添加不遵循标准目录布局的额外targets。
 
-By default, Cargo automatically determines the targets to build based on the
-[layout of the files][package layout] on the filesystem. The target
-configuration tables, such as `[lib]`, `[[bin]]`, `[[test]]`, `[[bench]]`, or
-`[[example]]`, can be used to add additional targets that don't follow the
-standard directory layout.
-
-The automatic target discovery can be disabled so that only manually
-configured targets will be built. Setting the keys `autobins`, `autoexamples`,
-`autotests`, or `autobenches` to `false` in the `[package]` section will
-disable auto-discovery of the corresponding target type.
+可以禁用自动targets发现，以便仅构建手动配置的targets。在 `[package]` 部分将 `autobins`、`autoexamples`、`autotests` 或 `autobenches` 键设置为 `false` 将禁用相应targets类型的自动发现。
 
 ```toml
 [package]
@@ -328,11 +205,7 @@ autotests = false
 autobenches = false
 ```
 
-Disabling automatic discovery should only be needed for specialized
-situations. For example, if you have a library where you want a *module* named
-`bin`, this would present a problem because Cargo would usually attempt to
-compile anything in the `bin` directory as an executable. Here is a sample
-layout of this scenario:
+禁用自动发现通常仅在特殊情况下需要。例如，如果你有一个库，并且你想要一个名为 `bin` 的*模块*，这将带来问题，因为 Cargo 通常会将 `bin` 目录中的任何文件作为可执行程序编译。以下是此场景的示例布局：
 
 ```text
 ├── Cargo.toml
@@ -342,8 +215,7 @@ layout of this scenario:
         └── mod.rs
 ```
 
-To prevent Cargo from inferring `src/bin/mod.rs` as an executable, set
-`autobins = false` in `Cargo.toml` to disable auto-discovery:
+为了防止 Cargo 将 `src/bin/mod.rs` 推断为可执行程序，请在 `Cargo.toml` 中设置 `autobins = false` 以禁用自动发现：
 
 ```toml
 [package]
@@ -351,10 +223,7 @@ To prevent Cargo from inferring `src/bin/mod.rs` as an executable, set
 autobins = false
 ```
 
-> **Note**: For packages with the 2015 edition, the default for auto-discovery
-> is `false` if at least one target is manually defined in `Cargo.toml`.
-> Beginning with the 2018 edition, the default is always `true`.
-
+> **注意**：对于 2015 版本的包，如果在 `Cargo.toml` 中至少手动定义了一个targets，则自动发现的默认值为 `false`。从 2018 版本开始，默认值始终为 `true`。
 
 [Build cache]: ../guide/build-cache.md
 [Rust Edition]: ../../edition-guide/index.html
@@ -368,7 +237,7 @@ autobins = false
 [cfg-test]: ../../reference/conditional-compilation.html#test
 [crate types]: ../../reference/linkage.html
 [crates.io]: https://crates.io/
-[customized]: #configuring-a-target
+[customized]: #配置target
 [dependencies]: specifying-dependencies.md
 [dev-dependencies]: specifying-dependencies.md#development-dependencies
 [documentation examples]: ../../rustdoc/documentation-tests.html
