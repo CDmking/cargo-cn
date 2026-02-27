@@ -20,7 +20,7 @@
 
 * [Cargo 参考](reference/index.md)
     * [指定依赖](reference/specifying-dependencies.md)
-        * [Overriding Dependencies](reference/overriding-dependencies.md)
+        * [覆盖依赖项](reference/overriding-dependencies.md)
     * [清单格式](reference/manifest.md)
         * [Cargo Targets](reference/cargo-targets.md)
     * [Workspaces](reference/workspaces.md)
